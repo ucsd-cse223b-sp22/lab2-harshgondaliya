@@ -1,6 +1,5 @@
 use crate::lab2::bin_store::BinStore;
-use crate::lab2::bin_store_client::BinStoreClient;
-use std::error::Error;
+use std::{error::Error, sync::Mutex};
 use tokio::time;
 use tribbler::{
     config::KeeperConfig,
@@ -95,5 +94,6 @@ pub async fn new_front(
 ) -> TribResult<Box<dyn Server + Send + Sync>> {
     Ok(Box::new(FrontEnd {
         bin_storage: bin_storage,
+        cached_users: Mutex::<Vec<String>>::new(vec![]),
     }))
 }
