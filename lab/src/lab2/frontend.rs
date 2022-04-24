@@ -1,4 +1,3 @@
-#[feature(arc_unwrap_or_clone)]
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::cmp::{min, Ordering};
@@ -11,7 +10,7 @@ use tribbler::storage::BinStorage;
 use tribbler::trib::{self, MAX_FOLLOWING};
 use tribbler::{
     err::TribblerError,
-    trib::{is_valid_username, Server, Trib, MAX_TRIB_FETCH, MAX_TRIB_LEN, MIN_LIST_USER},
+    trib::{is_valid_username, Trib, MAX_TRIB_FETCH, MAX_TRIB_LEN, MIN_LIST_USER},
 };
 
 pub static BIN_SIGN_UP: &str = "SIGNUP";
@@ -133,7 +132,7 @@ impl trib::Server for FrontEnd {
     /// of at lest 20 of them needs to be listed.
     /// The result should be sorted in alphabetical order.
     async fn list_users(&self) -> TribResult<Vec<String>> {
-        let mut res_users_list: Vec<String> = vec![];
+        let res_users_list: Vec<String>;
         let cached_users_list = (*self.cached_users.lock().unwrap()).clone();
         if cached_users_list.len() < 20 {
             let special_sign_up_bin = match self.bin_storage.bin(BIN_SIGN_UP).await {
@@ -268,24 +267,25 @@ impl trib::Server for FrontEnd {
             .iter()
             .map(|x| x.trib.clone())
             .collect::<Vec<Arc<Trib>>>();
+        if ntrib > MAX_TRIB_FETCH {
+            let to_be_removed_tribs: Vec<String> = seq_trib_list[..start]
+                .to_vec()
+                .iter()
+                .map(|x| serde_json::to_string(&(x.trib.clone())).unwrap())
+                .collect::<Vec<String>>();
 
-        let to_be_removed_tribs: Vec<String> = seq_trib_list[..start]
-            .to_vec()
-            .iter()
-            .map(|x| serde_json::to_string(&(x.trib.clone())).unwrap())
-            .collect::<Vec<String>>();
-
-        for trib in to_be_removed_tribs.iter() {
-            let _ = match user_bin
-                .list_remove(&storage::KeyValue {
-                    key: KEY_TRIBS.to_string(),
-                    value: trib.to_string(),
-                })
-                .await
-            {
-                Ok(_v) => {}
-                Err(_e) => {} // we are not concerned if this errors; just cleanup failed
-            };
+            for trib in to_be_removed_tribs.iter() {
+                let _ = match user_bin
+                    .list_remove(&storage::KeyValue {
+                        key: KEY_TRIBS.to_string(),
+                        value: trib.to_string(),
+                    })
+                    .await
+                {
+                    Ok(_v) => {}
+                    Err(_e) => {} // we are not concerned if this errors; just cleanup failed
+                };
+            }
         }
         Ok(res_list)
     }
@@ -405,28 +405,28 @@ impl trib::Server for FrontEnd {
                 whom.to_string(),
             )));
         }
-        // remove the invalid logs in the backend
-        let to_be_removed_logs: Vec<String> = res_deserialized_log
-            .iter()
-            .filter(|x| x.valid == false)
-            .cloned()
-            .collect::<Vec<LogResult>>()
-            .iter()
-            .map(|x| serde_json::to_string(&x.log).unwrap())
-            .collect::<Vec<String>>();
+        // // remove the invalid logs in the backend
+        // let to_be_removed_logs: Vec<String> = res_deserialized_log
+        //     .iter()
+        //     .filter(|x| x.valid == false)
+        //     .cloned()
+        //     .collect::<Vec<LogResult>>()
+        //     .iter()
+        //     .map(|x| serde_json::to_string(&x.log).unwrap())
+        //     .collect::<Vec<String>>();
 
-        for log in to_be_removed_logs.iter() {
-            let _ = match user_bin
-                .list_remove(&storage::KeyValue {
-                    key: KEY_FOLLOWING_LOG.to_string(),
-                    value: log.to_string(),
-                })
-                .await
-            {
-                Ok(_v) => {}
-                Err(_e) => {} // we are not concerned if this errors; just cleanup failed
-            };
-        }
+        // for log in to_be_removed_logs.iter() {
+        //     let _ = match user_bin
+        //         .list_remove(&storage::KeyValue {
+        //             key: KEY_FOLLOWING_LOG.to_string(),
+        //             value: log.to_string(),
+        //         })
+        //         .await
+        //     {
+        //         Ok(_v) => {}
+        //         Err(_e) => {} // we are not concerned if this errors; just cleanup failed
+        //     };
+        // }
         // no possible errors, return result to client
         Ok(())
     }
@@ -538,27 +538,27 @@ impl trib::Server for FrontEnd {
             )));
         }
         // remove the invalid logs in the backend
-        let to_be_removed_logs: Vec<String> = res_deserialized_log
-            .iter()
-            .filter(|x| x.valid == false)
-            .cloned()
-            .collect::<Vec<LogResult>>()
-            .iter()
-            .map(|x| serde_json::to_string(&x.log).unwrap())
-            .collect::<Vec<String>>();
+        // let to_be_removed_logs: Vec<String> = res_deserialized_log
+        //     .iter()
+        //     .filter(|x| x.valid == false)
+        //     .cloned()
+        //     .collect::<Vec<LogResult>>()
+        //     .iter()
+        //     .map(|x| serde_json::to_string(&x.log).unwrap())
+        //     .collect::<Vec<String>>();
 
-        for log in to_be_removed_logs.iter() {
-            let _ = match user_bin
-                .list_remove(&storage::KeyValue {
-                    key: KEY_FOLLOWING_LOG.to_string(),
-                    value: log.to_string(),
-                })
-                .await
-            {
-                Ok(_v) => {}
-                Err(_e) => {} // we are not concerned if this errors; just cleanup failed
-            };
-        }
+        // for log in to_be_removed_logs.iter() {
+        //     let _ = match user_bin
+        //         .list_remove(&storage::KeyValue {
+        //             key: KEY_FOLLOWING_LOG.to_string(),
+        //             value: log.to_string(),
+        //         })
+        //         .await
+        //     {
+        //         Ok(_v) => {}
+        //         Err(_e) => {} // we are not concerned if this errors; just cleanup failed
+        //     };
+        // }
         // no possible errors, return result to client
         Ok(())
     }
@@ -616,7 +616,6 @@ impl trib::Server for FrontEnd {
             .collect::<Vec<LogResult>>();
 
         // parse log and identify the result of is_following for the log that is there at this moment
-        let mut is_following_result = false;
         let mut following: HashSet<String> = HashSet::new();
         for res_log in res_deserialized_log.iter_mut() {
             if res_log.log.is_follow {
@@ -633,29 +632,29 @@ impl trib::Server for FrontEnd {
                 }
             }
         }
-        is_following_result = following.contains(whom);
+        let is_following_result = following.contains(whom);
         // remove the invalid logs in the backend
-        let to_be_removed_logs: Vec<String> = res_deserialized_log
-            .iter()
-            .filter(|x| x.valid == false)
-            .cloned()
-            .collect::<Vec<LogResult>>()
-            .iter()
-            .map(|x| serde_json::to_string(&x.log).unwrap())
-            .collect::<Vec<String>>();
+        // let to_be_removed_logs: Vec<String> = res_deserialized_log
+        //     .iter()
+        //     .filter(|x| x.valid == false)
+        //     .cloned()
+        //     .collect::<Vec<LogResult>>()
+        //     .iter()
+        //     .map(|x| serde_json::to_string(&x.log).unwrap())
+        //     .collect::<Vec<String>>();
 
-        for log in to_be_removed_logs.iter() {
-            let _ = match user_bin
-                .list_remove(&storage::KeyValue {
-                    key: KEY_FOLLOWING_LOG.to_string(),
-                    value: log.to_string(),
-                })
-                .await
-            {
-                Ok(_v) => {}
-                Err(_e) => {} // we are not concerned if this errors; just cleanup failed
-            };
-        }
+        // for log in to_be_removed_logs.iter() {
+        //     let _ = match user_bin
+        //         .list_remove(&storage::KeyValue {
+        //             key: KEY_FOLLOWING_LOG.to_string(),
+        //             value: log.to_string(),
+        //         })
+        //         .await
+        //     {
+        //         Ok(_v) => {}
+        //         Err(_e) => {} // we are not concerned if this errors; just cleanup failed
+        //     };
+        // }
         Ok(is_following_result)
     }
 
@@ -721,27 +720,27 @@ impl trib::Server for FrontEnd {
             }
         }
         // remove the invalid logs in the backend
-        let to_be_removed_logs: Vec<String> = res_deserialized_log
-            .iter()
-            .filter(|x| x.valid == false)
-            .cloned()
-            .collect::<Vec<LogResult>>()
-            .iter()
-            .map(|x| serde_json::to_string(&x.log).unwrap())
-            .collect::<Vec<String>>();
+        // let to_be_removed_logs: Vec<String> = res_deserialized_log
+        //     .iter()
+        //     .filter(|x| x.valid == false)
+        //     .cloned()
+        //     .collect::<Vec<LogResult>>()
+        //     .iter()
+        //     .map(|x| serde_json::to_string(&x.log).unwrap())
+        //     .collect::<Vec<String>>();
 
-        for log in to_be_removed_logs.iter() {
-            let _ = match user_bin
-                .list_remove(&storage::KeyValue {
-                    key: KEY_FOLLOWING_LOG.to_string(),
-                    value: log.to_string(),
-                })
-                .await
-            {
-                Ok(_v) => {}
-                Err(_e) => {} // we are not concerned if this errors; just cleanup failed
-            };
-        }
+        // for log in to_be_removed_logs.iter() {
+        //     let _ = match user_bin
+        //         .list_remove(&storage::KeyValue {
+        //             key: KEY_FOLLOWING_LOG.to_string(),
+        //             value: log.to_string(),
+        //         })
+        //         .await
+        //     {
+        //         Ok(_v) => {}
+        //         Err(_e) => {} // we are not concerned if this errors; just cleanup failed
+        //     };
+        // }
         let vec_list: Vec<String> = following.into_iter().collect();
         Ok(vec_list)
     }
@@ -764,9 +763,184 @@ impl trib::Server for FrontEnd {
         if !registered_users_list.contains(&user.to_string()) {
             return Err(Box::new(TribblerError::UserDoesNotExist(user.to_string())));
         }
-        // get my tribs
+        // generate timeline
+        let mut home_timeline: Vec<SeqTrib> = vec![];
+        // get user's tribs
+        let user_bin = match self.bin_storage.bin(user).await {
+            Ok(v) => v,
+            Err(e) => return Err(Box::new(TribblerError::Unknown(e.to_string()))), // some error from remote service; sign_up not successful
+        };
+        let storage::List(trib_list) = match user_bin.list_get(KEY_TRIBS).await {
+            Ok(v) => v,
+            Err(e) => return Err(Box::new(TribblerError::Unknown(e.to_string()))), // some error from remote service; sign_up not successful
+        };
+        let deserialized_trib_list: Vec<Trib> = trib_list
+            .iter()
+            .map(|x| serde_json::from_str(&x).unwrap())
+            .collect::<Vec<Trib>>();
+        let user_trib_list: Vec<SeqTrib> = deserialized_trib_list
+            .iter()
+            .map(|x| SeqTrib {
+                logical_clock: x.clock,
+                physical_clock: x.time,
+                user_name: x.user.to_string(),
+                message: x.message.to_string(),
+                trib: Arc::<Trib>::new(x.clone()),
+            })
+            .collect::<Vec<SeqTrib>>();
 
-        let v: Vec<Arc<Trib>> = vec![];
-        Ok(v)
+        let ntrib = user_trib_list.len();
+        let start = match ntrib.cmp(&MAX_TRIB_FETCH) {
+            Ordering::Greater => ntrib - MAX_TRIB_FETCH,
+            _ => 0,
+        };
+        // clean user's tribs
+        if ntrib > MAX_TRIB_FETCH {
+            let to_be_removed_tribs: Vec<String> = user_trib_list[..start]
+                .to_vec()
+                .iter()
+                .map(|x| serde_json::to_string(&(x.trib.clone())).unwrap())
+                .collect::<Vec<String>>();
+
+            for trib in to_be_removed_tribs.iter() {
+                let _ = match user_bin
+                    .list_remove(&storage::KeyValue {
+                        key: KEY_TRIBS.to_string(),
+                        value: trib.to_string(),
+                    })
+                    .await
+                {
+                    Ok(_v) => {}
+                    Err(_e) => {} // we are not concerned if this errors; just cleanup failed
+                };
+            }
+        }
+        // append user's tribs to timeline
+        home_timeline.append(&mut user_trib_list[start..].to_vec().clone());
+
+        // identify followers
+        let storage::List(fetched_log) = match user_bin.list_get(KEY_FOLLOWING_LOG).await {
+            Ok(v) => v,
+            Err(e) => return Err(Box::new(TribblerError::Unknown(e.to_string()))), // some error from remote service; sign_up not successful
+        };
+        let deserialized_log: Vec<FollowUnfollowLog> = fetched_log
+            .iter()
+            .map(|x| serde_json::from_str(&x).unwrap())
+            .collect::<Vec<FollowUnfollowLog>>();
+        let mut res_deserialized_log: Vec<LogResult> = deserialized_log
+            .iter()
+            .map(|x| LogResult {
+                valid: true,
+                log: x.clone(),
+            })
+            .collect::<Vec<LogResult>>();
+
+        // parse log and identify the result of following() for the log that is there at this moment
+        let mut following: HashSet<String> = HashSet::new();
+        for res_log in res_deserialized_log.iter_mut() {
+            if res_log.log.is_follow {
+                if following.contains(&res_log.log.whom) {
+                    res_log.valid = false
+                } else {
+                    following.insert(res_log.log.whom.clone());
+                }
+            } else {
+                if following.contains(&res_log.log.whom) {
+                    following.remove(&res_log.log.whom.to_string());
+                } else {
+                    res_log.valid = false;
+                }
+            }
+        }
+        // remove the invalid logs in the backend
+        let to_be_removed_logs: Vec<String> = res_deserialized_log
+            .iter()
+            .filter(|x| x.valid == false)
+            .cloned()
+            .collect::<Vec<LogResult>>()
+            .iter()
+            .map(|x| serde_json::to_string(&x.log).unwrap())
+            .collect::<Vec<String>>();
+
+        for log in to_be_removed_logs.iter() {
+            let _ = match user_bin
+                .list_remove(&storage::KeyValue {
+                    key: KEY_FOLLOWING_LOG.to_string(),
+                    value: log.to_string(),
+                })
+                .await
+            {
+                Ok(_v) => {}
+                Err(_e) => {} // we are not concerned if this errors; just cleanup failed
+            };
+        }
+        let following_list: Vec<String> = following.into_iter().collect();
+        // fetch tribs of following
+        for following_user in following_list.iter() {
+            let following_user_bin = match self.bin_storage.bin(following_user).await {
+                Ok(v) => v,
+                Err(e) => return Err(Box::new(TribblerError::Unknown(e.to_string()))), // some error from remote service; sign_up not successful
+            };
+            let storage::List(trib_list) = match following_user_bin.list_get(KEY_TRIBS).await {
+                Ok(v) => v,
+                Err(e) => return Err(Box::new(TribblerError::Unknown(e.to_string()))), // some error from remote service; sign_up not successful
+            };
+            let deserialized_trib_list: Vec<Trib> = trib_list
+                .iter()
+                .map(|x| serde_json::from_str(&x).unwrap())
+                .collect::<Vec<Trib>>();
+            let user_trib_list: Vec<SeqTrib> = deserialized_trib_list
+                .iter()
+                .map(|x| SeqTrib {
+                    logical_clock: x.clock,
+                    physical_clock: x.time,
+                    user_name: x.user.to_string(),
+                    message: x.message.to_string(),
+                    trib: Arc::<Trib>::new(x.clone()),
+                })
+                .collect::<Vec<SeqTrib>>();
+
+            let ntrib = user_trib_list.len();
+            let start = match ntrib.cmp(&MAX_TRIB_FETCH) {
+                Ordering::Greater => ntrib - MAX_TRIB_FETCH,
+                _ => 0,
+            };
+            // clean user's tribs
+            if ntrib > MAX_TRIB_FETCH {
+                let to_be_removed_tribs: Vec<String> = user_trib_list[..start]
+                    .to_vec()
+                    .iter()
+                    .map(|x| serde_json::to_string(&(x.trib.clone())).unwrap())
+                    .collect::<Vec<String>>();
+
+                for trib in to_be_removed_tribs.iter() {
+                    let _ = match following_user_bin
+                        .list_remove(&storage::KeyValue {
+                            key: KEY_TRIBS.to_string(),
+                            value: trib.to_string(),
+                        })
+                        .await
+                    {
+                        Ok(_v) => {}
+                        Err(_e) => {} // we are not concerned if this errors; just cleanup failed
+                    };
+                }
+            }
+            // append user's tribs to timeline
+            home_timeline.append(&mut user_trib_list[start..].to_vec().clone());
+        }
+        // sort the timeline
+        home_timeline.sort();
+        let n = home_timeline.len();
+        let s = match ntrib.cmp(&MAX_TRIB_FETCH) {
+            Ordering::Greater => n - MAX_TRIB_FETCH,
+            _ => 0,
+        };
+        let res_list: Vec<Arc<Trib>> = home_timeline[s..]
+            .to_vec()
+            .iter()
+            .map(|x| x.trib.clone())
+            .collect::<Vec<Arc<Trib>>>();
+        Ok(res_list)
     }
 }
