@@ -778,7 +778,7 @@ impl trib::Server for FrontEnd {
             .iter()
             .map(|x| serde_json::from_str(&x).unwrap())
             .collect::<Vec<Trib>>();
-        let user_trib_list: Vec<SeqTrib> = deserialized_trib_list
+        let mut user_trib_list: Vec<SeqTrib> = deserialized_trib_list
             .iter()
             .map(|x| SeqTrib {
                 logical_clock: x.clock,
@@ -788,7 +788,7 @@ impl trib::Server for FrontEnd {
                 trib: Arc::<Trib>::new(x.clone()),
             })
             .collect::<Vec<SeqTrib>>();
-
+        user_trib_list.sort();
         let ntrib = user_trib_list.len();
         let start = match ntrib.cmp(&MAX_TRIB_FETCH) {
             Ordering::Greater => ntrib - MAX_TRIB_FETCH,
@@ -889,7 +889,7 @@ impl trib::Server for FrontEnd {
                 .iter()
                 .map(|x| serde_json::from_str(&x).unwrap())
                 .collect::<Vec<Trib>>();
-            let user_trib_list: Vec<SeqTrib> = deserialized_trib_list
+            let mut user_trib_list: Vec<SeqTrib> = deserialized_trib_list
                 .iter()
                 .map(|x| SeqTrib {
                     logical_clock: x.clock,
@@ -899,7 +899,7 @@ impl trib::Server for FrontEnd {
                     trib: Arc::<Trib>::new(x.clone()),
                 })
                 .collect::<Vec<SeqTrib>>();
-
+            user_trib_list.sort();
             let ntrib = user_trib_list.len();
             let start = match ntrib.cmp(&MAX_TRIB_FETCH) {
                 Ordering::Greater => ntrib - MAX_TRIB_FETCH,
