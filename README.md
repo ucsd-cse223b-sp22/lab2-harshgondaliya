@@ -1,7 +1,7 @@
 # Distributed Key-Value Storage System (Lab 2)
 
 <p align="center">
-  <img src="https://github.com/ucsd-cse223b-sp22/lab2-harshgondaliya/blob/master/distributed-key-value-store.PNG">
+  <img src="https://github.com/ucsd-cse223b-sp22/lab2-harshgondaliya/blob/master/distributed-key-value-store.PNG" style="height: auto; width: 800px">
 </p>
 
 **Note:** `lab2-harshgondaliya/lab/src/lab2` contains the key code files for the project. The following documentation explains the major software artifacts in the project.
