@@ -1,6 +1,6 @@
 # Distributed Key-Value Storage System (Lab 2)
 
-**Note:** `lab2-harshgondaliya/lab2/src/` contains the key code files for the project. The following documentation explains the major software artifacts in the project.
+**Note:** `lab2-harshgondaliya/lab/src/lab2` contains the key code files for the project. The following documentation explains the major software artifacts in the project.
 
 ## BinStorage
 A BinStore instance provides a `BinStoreClient` that allows the user's front-end to perform Storage API calls to the user's virtual key-value store. Moreover, the `BinStoreClient` also contains all the backend addresses, enabling the user's front-end to perform Storage API calls to any other user's virtual key-value store. A `Keeper` process runs in the background that iteratively performs `clock()` Storage API call to each backend server every one second. It ensures that logical clock at any backend server in a given iteration is set to at least the maximum logical clock value seen in last iteration plus 1.
